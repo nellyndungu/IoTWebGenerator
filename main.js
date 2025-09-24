@@ -7,12 +7,12 @@ ${htmlContent}
 
 // ====== Device base snippets ======
 const deviceBase = {
-  led: `<h3>LED</h3><button onclick="toggleLED()">Toggle LED</button>`,
-  relay: `<h3>Relay</h3><button onclick="toggleRelay()">Toggle Relay</button>`,
-  motor: `<h3>Motor</h3><button onclick="toggleMotor()">Start Motor</button>`,
-  fan: `<h3>Fan</h3><button onclick="toggleFan()">Toggle Fan</button>`,
+  led: `<h3>LED</h3>`,
+  relay: `<h3>Relay</h3>`,
+  motor: `<h3>Motor</h3>`,
+  fan: `<h3>Fan</h3>`,
   servo: `<h3>Servo</h3><input type="range" min="0" max="180" id="servoControl"><p>Angle: <span id="servoValue">90</span>°</p>`,
-  buzzer: `<h3>Buzzer</h3><button onclick="toggleBuzzer()">Buzzer</button>`,
+  buzzer: `<h3>Buzzer</h3>`,
 
   tempSensor: `<h3>Temperature</h3>`,
   humiditySensor: `<h3>Humidity</h3>`,
@@ -46,7 +46,6 @@ const indicatorSnippets = {
   speedBar: `<progress value="0" max="100" class="speed-bar"></progress>`,
   switchSymbol: `<span>⎋</span>`,
   powerIcon: `<span>⚡</span>`,
-  angle: `<p>Angle: <span>0</span>°</p>`,
   dial: `<div class="dial-indicator"></div>`,
   needle: `<div class="needle-gauge"></div>`,
   wave: `<div class="wave-animation"></div>`,
@@ -70,28 +69,68 @@ const indicatorSnippets = {
 };
 
 // ====== Template layouts ======
-function buildTemplate(template, sections) {
+function buildTemplate(template, sections, pageTitle, pageHeading) {
+  const safeTitle = pageTitle || "ESP32 IoT Preview";
+  const safeHeading = pageHeading || "ESP32 IoT Preview";
   // base head + common styles (keeps preview consistent)
   const baseHead = `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ESP32 IoT Preview</title>
+<title>${safeTitle}</title>
 <style>
   body{font-family:Arial,Helvetica,sans-serif;padding:16px;background:#f6f8fb;color:#111}
   h1,h2{color:#103256}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
   .panel{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,0.08);text-align:center}
-  .indicator-circle{width:20px;height:20px;border-radius:50%;display:inline-block;margin-top:5px}
-  .glow-box{width:20px;height:20px;background:yellow;box-shadow:0 0 8px yellow;border-radius:50%}
+  .indicator-circle{width:18px;height:18px;border-radius:50%;display:inline-block;vertical-align:middle;margin-left:6px}
+  .glow-box{width:20px;height:20px;background:yellow;box-shadow:0 0 8px yellow;border-radius:50%;display:inline-block;margin-left:6px;vertical-align:middle}
   .speed-bar,.soil-bar,.brightness-bar{width:100%;height:10px}
   .alert-flash{animation:flash 1s infinite}
   @keyframes flash{0%,50%,100%{opacity:1}25%,75%{opacity:0}}
+
+  /* ===== Toggle Switch (copied into preview) ===== */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #ccc;
+    border-radius: 28px;
+    transition: background-color 0.3s;
+  }
+  .slider::after {
+    content: "";
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    top: 4px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.3s;
+  }
+  .switch input:checked + .slider {
+    background-color: #103256;
+  }
+  .switch input:checked + .slider::after {
+    transform: translateX(22px);
+  }
 </style>
 </head>
 <body>
-<h1>ESP32 IoT Preview</h1>
+<h1>${safeHeading}</h1>
 `;
 
   const tail = `</body></html>`;
@@ -134,6 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedDevices = [...document.querySelectorAll("input[name='device']:checked")];
     const templateEl = document.querySelector("input[name='template']:checked");
     const template = templateEl ? templateEl.value : 'simple';
+    const pageTitle = document.getElementById("pageTitleInput").value.trim();
+    const pageHeading = document.getElementById("pageHeadingInput").value.trim();
+
+
 
     const sections = { actuators: [], sensors: [], controls: [], misc: [] };
 
@@ -151,7 +194,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      const deviceHTML = `<div class="panel">${baseHTML}${indicatorsHTML}</div>`;
+       const isActuator = ["led","relay","motor","fan","servo","buzzer"].includes(device);
+
+    let deviceHTML = `<div class="panel">${baseHTML}`;
+
+    if (isActuator) {
+      deviceHTML += `<label class="switch">
+        <input type="checkbox" id="${device}Toggle">
+        <span class="slider"></span>
+      </label>`;
+    }
+
+    deviceHTML += indicatorsHTML;
+    deviceHTML += `</div>`;
 
       if (["led","relay","motor","fan","servo","buzzer"].includes(device)) sections.actuators.push(deviceHTML);
       else if (["tempSensor","humiditySensor","lightSensor","motionSensor","distanceSensor","gasSensor","soilSensor","customSensor"].includes(device)) sections.sensors.push(deviceHTML);
@@ -159,9 +214,62 @@ document.addEventListener('DOMContentLoaded', () => {
       else sections.misc.push(deviceHTML);
     });
 
-    const htmlContent = buildTemplate(template, sections);
+    const htmlContent = buildTemplate(template, sections, pageTitle, pageHeading);
 
     previewFrame.srcdoc = htmlContent;
+
+        // ====== Build Summary ======
+    const summaryDiv = document.getElementById("summaryContent");
+    const deviceList = selectedDevices.map(d => d.value);
+    const indicatorsByDevice = {};
+
+    selectedDevices.forEach(deviceInput => {
+      const device = deviceInput.value;
+      const dropdownSelected = document.getElementById(`${device}Selected`);
+      const chosenIndicators = [];
+      if (dropdownSelected) {
+        dropdownSelected.querySelectorAll(".tag").forEach(tag => {
+          chosenIndicators.push(tag.innerText.replace("×","").trim());
+        });
+      }
+      indicatorsByDevice[device] = chosenIndicators;
+    });
+
+    // required libs mapping
+    const libMap = {
+      chart: "Chart.js (served from CDN or stored locally)",
+      camera: "ESP32-CAM support",
+      servo: "ESP32Servo.h",
+      tempSensor: "DHT.h",
+      humiditySensor: "DHT.h",
+      distanceSensor: "NewPing.h",
+    };
+
+    const requiredLibs = [...new Set(
+      deviceList
+        .map(d => libMap[d])
+        .filter(Boolean)
+    )];
+
+    let htmlSummary = `<p><strong>Filename:</strong> webpage.h</p>`;
+    htmlSummary += `<h3>Devices & Indicators</h3><ul>`;
+    deviceList.forEach(d => {
+      htmlSummary += `<li><strong>${d}</strong>${
+        indicatorsByDevice[d].length ? ": " + indicatorsByDevice[d].join(", ") : ""
+      }</li>`;
+    });
+    htmlSummary += `</ul>`;
+
+    if (requiredLibs.length) {
+      htmlSummary += `<h3>Required Libraries</h3><ul>`;
+      requiredLibs.forEach(lib => htmlSummary += `<li>${lib}</li>`);
+      htmlSummary += `</ul>`;
+    } else {
+      htmlSummary += `<p><em>No extra libraries required (basic GPIO only).</em></p>`;
+    }
+
+    summaryDiv.innerHTML = htmlSummary;
+
     window.generatedContent = wrapAsHFile(htmlContent);
     downloadBtn.disabled = false;
   });
