@@ -196,20 +196,75 @@ button:disabled {
     background: #fff;
 }
 
-/* ===== Switch element (small style) ===== */
+/* ===== Modern Toggle Switch ===== */
 .switch {
-  display:inline-block;
-  position:relative;
-  width:46px;
-  height:26px;
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
 }
-.switch input { display:none; }
-.switch .slider {
-  position:absolute; inset:0; border-radius:26px; background:#ccc; transition:all .2s;
+
+.switch input {
+  opacity: 0;        /* hide the real checkbox */
+  width: 0;
+  height: 0;
 }
-.switch input:checked + .slider { background:#103256; }
-.switch .slider::after { content:''; position:absolute; left:4px; top:4px; width:18px; height:18px; border-radius:50%; background:#fff; transition:all .2s; }
-.switch input:checked + .slider::after { transform: translateX(20px); }
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #ccc;
+  border-radius: 28px;
+  transition: background-color 0.3s;
+}
+
+.slider::after {
+  content: "";
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  top: 4px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+/* when checked (ON) */
+input:checked + .slider {
+  background-color: #103256; /* your primary color */
+}
+
+input:checked + .slider::after {
+  transform: translateX(22px);
+}
+
+
+
+/* ===== Summary Panel ===== */
+#summary {
+    background: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 1.2rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+#summary h2 {
+    color: #103256;
+    margin-bottom: 0.8rem;
+}
+#summary h3 {
+    margin-top: 1rem;
+    color: #0056b3;
+}
+#summary ul {
+    margin-left: 1.2rem;
+    list-style: disc;
+}
+#summary li {
+    margin-bottom: 0.3rem;
+}
 
 /* ===== Footer ===== */
 footer {
