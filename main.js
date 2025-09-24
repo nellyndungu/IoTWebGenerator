@@ -1,11 +1,11 @@
-// ====== Wrap HTML code for Arduino ======
+//Wrap HTML code for Arduino
 function wrapAsHFile(htmlContent) {
   return `const char webpage[] PROGMEM = R"rawliteral(
 ${htmlContent}
 )rawliteral";`;
 }
 
-// ====== Device base snippets ======
+//Device base snippets
 const deviceBase = {
   led: `<h3>LED</h3>`,
   relay: `<h3>Relay</h3>`,
@@ -35,7 +35,7 @@ const deviceBase = {
   numberInput: `<h3>Number Input</h3><input type="number" id="numberInput" value="0">`
 };
 
-// ====== Indicator snippets ======
+//Indicator snippets
 const indicatorSnippets = {
   text: `<p>Status: <span id="statusText">--</span></p>`,
   numeric: `<p>Value: <span id="numericValue">--</span></p>`,
@@ -68,66 +68,25 @@ const indicatorSnippets = {
   chart: `<canvas></canvas>`
 };
 
-// ====== Template layouts ======
-function buildTemplate(template, sections, pageTitle, pageHeading) {
-  const safeTitle = pageTitle || "ESP32 IoT Preview";
+//Device category map
+const deviceCategory = {
+  actuators: ["led","relay","motor","fan","servo","buzzer"],
+  sensors: ["tempSensor","humiditySensor","lightSensor","motionSensor","distanceSensor","gasSensor","soilSensor","customSensor"],
+  controls: ["toggleBtn","momentaryBtn","slider","switch"],
+  misc: ["chart","camera","dropdown","textInput","numberInput"]
+};
+
+//Template layouts
+function buildTemplate(template, sections, pageTitle, pageHeading) { const safeTitle = pageTitle || "ESP32 IoT Preview";
   const safeHeading = pageHeading || "ESP32 IoT Preview";
-  // base head + common styles (keeps preview consistent)
+
   const baseHead = `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${safeTitle}</title>
-<style>
-  body{font-family:Arial,Helvetica,sans-serif;padding:16px;background:#f6f8fb;color:#111}
-  h1,h2{color:#103256}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-  .panel{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,0.08);text-align:center}
-  .indicator-circle{width:18px;height:18px;border-radius:50%;display:inline-block;vertical-align:middle;margin-left:6px}
-  .glow-box{width:20px;height:20px;background:yellow;box-shadow:0 0 8px yellow;border-radius:50%;display:inline-block;margin-left:6px;vertical-align:middle}
-  .speed-bar,.soil-bar,.brightness-bar{width:100%;height:10px}
-  .alert-flash{animation:flash 1s infinite}
-  @keyframes flash{0%,50%,100%{opacity:1}25%,75%{opacity:0}}
-
-  /* ===== Toggle Switch (copied into preview) ===== */
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 28px;
-  }
-  .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    inset: 0;
-    background-color: #ccc;
-    border-radius: 28px;
-    transition: background-color 0.3s;
-  }
-  .slider::after {
-    content: "";
-    position: absolute;
-    height: 20px;
-    width: 20px;
-    left: 4px;
-    top: 4px;
-    background-color: #fff;
-    border-radius: 50%;
-    transition: transform 0.3s;
-  }
-  .switch input:checked + .slider {
-    background-color: #103256;
-  }
-  .switch input:checked + .slider::after {
-    transform: translateX(22px);
-  }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <h1>${safeHeading}</h1>
@@ -135,40 +94,66 @@ function buildTemplate(template, sections, pageTitle, pageHeading) {
 
   const tail = `</body></html>`;
 
+  // === Dashboard Grid ===
   if (template === "dashboard") {
     return `${baseHead}
-<h2>Actuators</h2><div class="grid">${sections.actuators.join("")}</div>
-<h2>Sensors</h2><div class="grid">${sections.sensors.join("")}</div>
-<h2>Controls</h2><div class="grid">${sections.controls.join("")}</div>
-<h2>Misc</h2><div class="grid">${sections.misc.join("")}</div>
-${tail}`;
+    <h2>Actuators</h2><div class="grid">${sections.actuators.map(s => `<div class="panel">${s}</div>`).join("")}</div>
+    <h2>Sensors</h2><div class="grid">${sections.sensors.map(s => `<div class="panel">${s}</div>`).join("")}</div>
+    <h2>Controls</h2><div class="grid">${sections.controls.map(s => `<div class="panel">${s}</div>`).join("")}</div>
+    <h2>Misc</h2><div class="grid">${sections.misc.map(s => `<div class="panel">${s}</div>`).join("")}</div>
+    ${tail}`;
   }
 
+  // === Card Layout ===
   if (template === "card") {
     return `${baseHead}
-<div class="grid">
-  ${[...sections.actuators, ...sections.sensors, ...sections.controls, ...sections.misc].map(s => `<div class="panel">${s}</div>`).join('')}
-</div>
-${tail}`;
+    <div class="grid card-layout">
+      ${[...sections.actuators, ...sections.sensors, ...sections.controls, ...sections.misc]
+        .map(s => `<div class="panel">${s}</div>`).join("")}
+    </div>
+    ${tail}`;
   }
 
-  // simple list
+  // === Simple List (default) ===
   return `${baseHead}
-${sections.actuators.length ? `<h2>Actuators</h2>${sections.actuators.join("")}` : ''}
-${sections.sensors.length ? `<h2>Sensors</h2>${sections.sensors.join("")}` : ''}
-${sections.controls.length ? `<h2>Controls</h2>${sections.controls.join("")}` : ''}
-${sections.misc.length ? `<h2>Misc</h2>${sections.misc.join("")}` : ''}
-${tail}`;
+    ${sections.actuators.length ? `<h2>Actuators</h2><ul class="simple-list">${sections.actuators.map(s => `<li>${s}</li>`).join("")}</ul>` : ""}
+    ${sections.sensors.length ? `<h2>Sensors</h2><ul class="simple-list">${sections.sensors.map(s => `<li>${s}</li>`).join("")}</ul>` : ""}
+    ${sections.controls.length ? `<h2>Controls</h2><ul class="simple-list">${sections.controls.map(s => `<li>${s}</li>`).join("")}</ul>` : ""}
+    ${sections.misc.length ? `<h2>Misc</h2><ul class="simple-list">${sections.misc.map(s => `<li>${s}</li>`).join("")}</ul>` : ""}
+    ${tail}`;
 }
 
-// ===== Main logic =====
+//DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
-
-  // GENERATE
   const generateBtn = document.getElementById("generateBtn");
   const downloadBtn = document.getElementById("downloadBtn");
   const previewFrame = document.getElementById("previewFrame");
 
+  //Auto-build device dropdowns
+  document.querySelectorAll(".device-block").forEach(block => {
+    const device = block.dataset.device;
+    const options = (block.dataset.options || "").split(",").map(opt => {
+      const [value, label] = opt.split(":");
+      return { value: value.trim(), label: label.trim() };
+    });
+
+    const checkbox = document.createElement("label");
+    checkbox.innerHTML = `<input type="checkbox" name="device" value="${device}"> ${device.replace(/([A-Z])/g, ' $1')}`;
+
+    const dropdown = document.createElement("div");
+    dropdown.classList.add("custom-dropdown");
+    dropdown.innerHTML = `
+      <div class="selected-options"><span class="placeholder">Select indicator...</span></div>
+      <div class="options-list">
+        ${options.map(o => `<div class="option" data-value="${o.value}">${o.label}</div>`).join("")}
+      </div>
+    `;
+
+    block.appendChild(checkbox);
+    block.appendChild(dropdown);
+  });
+
+  // === Generate Code ===
   generateBtn.addEventListener("click", () => {
     const selectedDevices = [...document.querySelectorAll("input[name='device']:checked")];
     const templateEl = document.querySelector("input[name='template']:checked");
@@ -176,56 +161,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageTitle = document.getElementById("pageTitleInput").value.trim();
     const pageHeading = document.getElementById("pageHeadingInput").value.trim();
 
-
-
     const sections = { actuators: [], sensors: [], controls: [], misc: [] };
 
     selectedDevices.forEach(deviceInput => {
       const device = deviceInput.value;
       const baseHTML = deviceBase[device] || "";
 
-      // Collect selected indicators from tags
-      const dropdownSelected = document.getElementById(`${device}Selected`);
       let indicatorsHTML = "";
+      const dropdownSelected = document.querySelector(`#${device}Selected, [data-device='${device}'] .selected-options`);
       if (dropdownSelected) {
         dropdownSelected.querySelectorAll(".tag").forEach(tag => {
           const indType = tag.getAttribute("data-value");
           if (indicatorSnippets[indType]) indicatorsHTML += indicatorSnippets[indType];
         });
       }
+      // Default wrapper
+        let deviceHTML = `<div class="panel">${baseHTML}`;
 
-       const isActuator = ["led","relay","motor","fan","servo","buzzer"].includes(device);
-
-    let deviceHTML = `<div class="panel">${baseHTML}`;
-
-    if (isActuator) {
-      deviceHTML += `<label class="switch">
+  // ✅ Add default toggle for actuators
+  if (deviceCategory.actuators.includes(device)) {
+    deviceHTML += `
+      <label class="switch">
         <input type="checkbox" id="${device}Toggle">
         <span class="slider"></span>
-      </label>`;
-    }
+      </label>
+    `;
+  }
 
-    deviceHTML += indicatorsHTML;
-    deviceHTML += `</div>`;
-
-      if (["led","relay","motor","fan","servo","buzzer"].includes(device)) sections.actuators.push(deviceHTML);
-      else if (["tempSensor","humiditySensor","lightSensor","motionSensor","distanceSensor","gasSensor","soilSensor","customSensor"].includes(device)) sections.sensors.push(deviceHTML);
-      else if (["toggleBtn","momentaryBtn","slider","switch"].includes(device)) sections.controls.push(deviceHTML);
-      else sections.misc.push(deviceHTML);
+  deviceHTML += indicatorsHTML;
+  deviceHTML += `</div>`;
+      let category = Object.keys(deviceCategory).find(cat => deviceCategory[cat].includes(device));
+      sections[category].push(deviceHTML);
     });
 
     const htmlContent = buildTemplate(template, sections, pageTitle, pageHeading);
-
     previewFrame.srcdoc = htmlContent;
 
-        // ====== Build Summary ======
+    // === Build Summary ===
     const summaryDiv = document.getElementById("summaryContent");
     const deviceList = selectedDevices.map(d => d.value);
     const indicatorsByDevice = {};
 
     selectedDevices.forEach(deviceInput => {
       const device = deviceInput.value;
-      const dropdownSelected = document.getElementById(`${device}Selected`);
+      const dropdownSelected = document.querySelector(`[data-device='${device}'] .selected-options`);
       const chosenIndicators = [];
       if (dropdownSelected) {
         dropdownSelected.querySelectorAll(".tag").forEach(tag => {
@@ -235,7 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
       indicatorsByDevice[device] = chosenIndicators;
     });
 
-    // required libs mapping
     const libMap = {
       chart: "Chart.js (served from CDN or stored locally)",
       camera: "ESP32-CAM support",
@@ -245,18 +223,12 @@ document.addEventListener('DOMContentLoaded', () => {
       distanceSensor: "NewPing.h",
     };
 
-    const requiredLibs = [...new Set(
-      deviceList
-        .map(d => libMap[d])
-        .filter(Boolean)
-    )];
+    const requiredLibs = [...new Set(deviceList.map(d => libMap[d]).filter(Boolean))];
 
     let htmlSummary = `<p><strong>Filename:</strong> webpage.h</p>`;
     htmlSummary += `<h3>Devices & Indicators</h3><ul>`;
     deviceList.forEach(d => {
-      htmlSummary += `<li><strong>${d}</strong>${
-        indicatorsByDevice[d].length ? ": " + indicatorsByDevice[d].join(", ") : ""
-      }</li>`;
+      htmlSummary += `<li><strong>${d}</strong>${indicatorsByDevice[d].length ? ": " + indicatorsByDevice[d].join(", ") : ""}</li>`;
     });
     htmlSummary += `</ul>`;
 
@@ -274,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadBtn.disabled = false;
   });
 
-  // DOWNLOAD
+  // === Download Code ===
   downloadBtn.addEventListener("click", () => {
     if (!window.generatedContent) return;
     const blob = new Blob([window.generatedContent], { type: "text/plain" });
@@ -285,28 +257,28 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(link);
     link.click();
     link.remove();
-    // release the blob URL after a short delay
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 
-  // ===== Custom dropdown logic =====
-  document.querySelectorAll(".custom-dropdown").forEach(dropdown => {
-    const selectedArea = dropdown.querySelector(".selected-options");
-    const optionsList = dropdown.querySelector(".options-list");
+  // === Custom dropdown logic ===
+  document.addEventListener("click", e => {
+    document.querySelectorAll(".custom-dropdown").forEach(dropdown => {
+      const selectedArea = dropdown.querySelector(".selected-options");
+      const optionsList = dropdown.querySelector(".options-list");
 
-    // if no selectedArea or optionsList, skip
-    if (!selectedArea || !optionsList) return;
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove("active");
+        return;
+      }
 
-    selectedArea.addEventListener("click", (e) => {
-      dropdown.classList.toggle("active");
-    });
+      if (e.target === selectedArea) {
+        dropdown.classList.toggle("active");
+      }
 
-    optionsList.querySelectorAll(".option").forEach(option => {
-      option.addEventListener("click", (e) => {
-        const value = option.getAttribute("data-value");
-        const text = option.innerText;
+      if (e.target.classList.contains("option")) {
+        const value = e.target.dataset.value;
+        const text = e.target.innerText;
 
-        // remove placeholder if present
         const placeholder = selectedArea.querySelector(".placeholder");
         if (placeholder) placeholder.remove();
 
@@ -315,29 +287,17 @@ document.addEventListener('DOMContentLoaded', () => {
           tag.classList.add("tag");
           tag.setAttribute("data-value", value);
           tag.innerHTML = `${text} <span class="remove-tag" title="Remove">&times;</span>`;
-          const rem = tag.querySelector(".remove-tag");
-          rem.addEventListener("click", (ev) => {
-            ev.stopPropagation(); // don't re-open/close dropdown
+          tag.querySelector(".remove-tag").addEventListener("click", ev => {
+            ev.stopPropagation();
             tag.remove();
-            // restore placeholder if no tags left
             if (selectedArea.querySelectorAll(".tag").length === 0) {
-              const ph = document.createElement("span");
-              ph.classList.add("placeholder");
-              ph.innerText = "Select indicator...";
-              selectedArea.appendChild(ph);
+              selectedArea.innerHTML = `<span class="placeholder">Select indicator...</span>`;
             }
           });
           selectedArea.appendChild(tag);
         }
         dropdown.classList.remove("active");
-      });
-    });
-  });
-
-  // click outside to close
-  document.addEventListener("click", e => {
-    document.querySelectorAll(".custom-dropdown").forEach(dropdown => {
-      if (!dropdown.contains(e.target)) dropdown.classList.remove("active");
+      }
     });
   });
 
