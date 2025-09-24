@@ -77,7 +77,8 @@ const deviceCategory = {
 };
 
 //Template layouts
-function buildTemplate(template, sections, pageTitle, pageHeading) { const safeTitle = pageTitle || "ESP32 IoT Preview";
+function buildTemplate(template, sections, pageTitle, pageHeading) {
+  const safeTitle = pageTitle || "ESP32 IoT Preview";
   const safeHeading = pageHeading || "ESP32 IoT Preview";
 
   const baseHead = `<!doctype html>
@@ -94,7 +95,6 @@ function buildTemplate(template, sections, pageTitle, pageHeading) { const safeT
 
   const tail = `</body></html>`;
 
-  // === Dashboard Grid ===
   if (template === "dashboard") {
     return `${baseHead}
     <h2>Actuators</h2><div class="grid">${sections.actuators.map(s => `<div class="panel">${s}</div>`).join("")}</div>
@@ -104,7 +104,6 @@ function buildTemplate(template, sections, pageTitle, pageHeading) { const safeT
     ${tail}`;
   }
 
-  // === Card Layout ===
   if (template === "card") {
     return `${baseHead}
     <div class="grid card-layout">
@@ -114,7 +113,6 @@ function buildTemplate(template, sections, pageTitle, pageHeading) { const safeT
     ${tail}`;
   }
 
-  // === Simple List (default) ===
   return `${baseHead}
     ${sections.actuators.length ? `<h2>Actuators</h2><ul class="simple-list">${sections.actuators.map(s => `<li>${s}</li>`).join("")}</ul>` : ""}
     ${sections.sensors.length ? `<h2>Sensors</h2><ul class="simple-list">${sections.sensors.map(s => `<li>${s}</li>`).join("")}</ul>` : ""}
@@ -129,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const downloadBtn = document.getElementById("downloadBtn");
   const previewFrame = document.getElementById("previewFrame");
 
-  //Auto-build device dropdowns
+  //Auto-build device UI (checkbox + count input + dropdown)
   document.querySelectorAll(".device-block").forEach(block => {
     const device = block.dataset.device;
     const options = (block.dataset.options || "").split(",").map(opt => {
@@ -137,8 +135,15 @@ document.addEventListener('DOMContentLoaded', () => {
       return { value: value.trim(), label: label.trim() };
     });
 
-    const checkbox = document.createElement("label");
-    checkbox.innerHTML = `<input type="checkbox" name="device" value="${device}"> ${device.replace(/([A-Z])/g, ' $1')}`;
+    const label = document.createElement("label");
+    label.innerHTML = `<input type="checkbox" name="device" value="${device}"> ${device.replace(/([A-Z])/g, ' $1')}`;
+
+    const countInput = document.createElement("input");
+    countInput.type = "number";
+    countInput.classList.add("device-count");
+    countInput.dataset.device = device;
+    countInput.value = "1";
+    countInput.min = "1";
 
     const dropdown = document.createElement("div");
     dropdown.classList.add("custom-dropdown");
@@ -149,7 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    block.appendChild(checkbox);
+    block.appendChild(label);
+    block.appendChild(countInput);
     block.appendChild(dropdown);
   });
 
@@ -165,33 +171,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     selectedDevices.forEach(deviceInput => {
       const device = deviceInput.value;
+      const count = parseInt(document.querySelector(`.device-count[data-device="${device}"]`)?.value || "1", 10);
       const baseHTML = deviceBase[device] || "";
 
       let indicatorsHTML = "";
-      const dropdownSelected = document.querySelector(`#${device}Selected, [data-device='${device}'] .selected-options`);
+      const dropdownSelected = document.querySelector(`[data-device='${device}'] .selected-options`);
       if (dropdownSelected) {
         dropdownSelected.querySelectorAll(".tag").forEach(tag => {
           const indType = tag.getAttribute("data-value");
           if (indicatorSnippets[indType]) indicatorsHTML += indicatorSnippets[indType];
         });
       }
-      // Default wrapper
+
+      for (let i = 1; i <= count; i++) {
         let deviceHTML = `<div class="panel">${baseHTML}`;
 
-  // ✅ Add default toggle for actuators
-  if (deviceCategory.actuators.includes(device)) {
-    deviceHTML += `
-      <label class="switch">
-        <input type="checkbox" id="${device}Toggle">
-        <span class="slider"></span>
-      </label>
-    `;
-  }
+        if (deviceCategory.actuators.includes(device)) {
+          deviceHTML += `
+            <label class="switch">
+              <input type="checkbox" id="${device}${i}Toggle">
+              <span class="slider"></span>
+            </label>
+          `;
+        }
 
-  deviceHTML += indicatorsHTML;
-  deviceHTML += `</div>`;
-      let category = Object.keys(deviceCategory).find(cat => deviceCategory[cat].includes(device));
-      sections[category].push(deviceHTML);
+        deviceHTML += indicatorsHTML;
+        deviceHTML += `</div>`;
+
+        let category = Object.keys(deviceCategory).find(cat => deviceCategory[cat].includes(device));
+        sections[category].push(deviceHTML);
+      }
     });
 
     const htmlContent = buildTemplate(template, sections, pageTitle, pageHeading);
@@ -204,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     selectedDevices.forEach(deviceInput => {
       const device = deviceInput.value;
+      const count = parseInt(document.querySelector(`.device-count[data-device="${device}"]`)?.value || "1", 10);
       const dropdownSelected = document.querySelector(`[data-device='${device}'] .selected-options`);
       const chosenIndicators = [];
       if (dropdownSelected) {
@@ -211,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
           chosenIndicators.push(tag.innerText.replace("×","").trim());
         });
       }
-      indicatorsByDevice[device] = chosenIndicators;
+      indicatorsByDevice[device] = { count, chosenIndicators };
     });
 
     const libMap = {
@@ -228,7 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let htmlSummary = `<p><strong>Filename:</strong> webpage.h</p>`;
     htmlSummary += `<h3>Devices & Indicators</h3><ul>`;
     deviceList.forEach(d => {
-      htmlSummary += `<li><strong>${d}</strong>${indicatorsByDevice[d].length ? ": " + indicatorsByDevice[d].join(", ") : ""}</li>`;
+      const info = indicatorsByDevice[d];
+      htmlSummary += `<li><strong>${d} (x${info.count})</strong>${info.chosenIndicators.length ? ": " + info.chosenIndicators.join(", ") : ""}</li>`;
     });
     htmlSummary += `</ul>`;
 
@@ -302,3 +313,18 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 }); // DOMContentLoaded
+// === Scroll-to-top button ===
+const toTopBtn = document.getElementById("toTopBtn");
+
+window.addEventListener("scroll", () => {
+  if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+    toTopBtn.style.display = "block";
+  } else {
+    toTopBtn.style.display = "none";
+  }
+});
+
+toTopBtn.addEventListener("click", () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
