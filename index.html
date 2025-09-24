@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IoT Web Generator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>IoT Website Generator</h1>
+  <p>Create ready-to-use .h files for ESP32/Arduino IoT projects</p>
+</header>
+
+<main>
+  <section id="devices">
+  <h2>Select Devices & Indicators</h2>
+  <form id="deviceForm">
+    <!-- === Actuators === -->
+    <fieldset>
+      <legend>Actuators</legend>
+
+      <!-- LED -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="led"> LED</label>
+        <div class="custom-dropdown" id="ledDropdown">
+          <div class="selected-options" id="ledSelected"><span class="placeholder">Select indicator...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="text">Text Status</div>
+            <div class="option" data-value="colorCircle">Color Circle</div>
+            <div class="option" data-value="glow">Glow Effect</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Relay -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="relay"> Relay</label>
+        <div class="custom-dropdown" id="relayDropdown">
+          <div class="selected-options" id="relaySelected"><span class="placeholder">Select indicator...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="text">Text Status</div>
+            <div class="option" data-value="switchSymbol">Switch Symbol</div>
+            <div class="option" data-value="powerIcon">Power Icon</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Motor -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="motor"> Motor</label>
+        <div class="custom-dropdown" id="motorDropdown">
+          <div class="selected-options" id="motorSelected"><span class="placeholder">Select indicators...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="text">Text Status</div>
+            <div class="option" data-value="rotation">Rotating Icon</div>
+            <div class="option" data-value="speedBar">Speed Bar</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Servo -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="servo"> Servo Motor</label>
+        <div class="custom-dropdown" id="servoDropdown">
+          <div class="selected-options" id="servoSelected"><span class="placeholder">Select indicator...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="angle">Angle Value</div>
+            <div class="option" data-value="dial">Dial Indicator</div>
+            <div class="option" data-value="needle">Needle Gauge</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Buzzer -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="buzzer"> Buzzer</label>
+        <div class="custom-dropdown" id="buzzerDropdown">
+          <div class="selected-options" id="buzzerSelected"><span class="placeholder">Select indicator...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="text">Text Status</div>
+            <div class="option" data-value="wave">Wave Animation</div>
+            <div class="option" data-value="soundIcon">Sound Icon</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fan -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="fan"> Fan</label>
+        <div class="custom-dropdown" id="fanDropdown">
+          <div class="selected-options" id="fanSelected"><span class="placeholder">Select indicator...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="text">Text Status</div>
+            <div class="option" data-value="spin">Spinning Icon</div>
+            <div class="option" data-value="speedDial">Speed Dial</div>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- === Sensors === -->
+    <fieldset>
+      <legend>Sensors</legend>
+
+      <!-- Temperature -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="tempSensor"> Temperature</label>
+        <div class="custom-dropdown" id="tempSensorDropdown">
+          <div class="selected-options" id="tempSensorSelected"><span class="placeholder">Select indicator...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="numeric">Numeric °C</div>
+            <div class="option" data-value="gauge">Gauge</div>
+            <div class="option" data-value="thermometerIcon">Thermometer Icon</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Humidity -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="humiditySensor"> Humidity</label>
+        <div class="custom-dropdown" id="humiditySensorDropdown">
+          <div class="selected-options" id="humiditySensorSelected"><span class="placeholder">Select indicator...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="numeric">Numeric %</div>
+            <div class="option" data-value="progress">Progress Bar</div>
+            <div class="option" data-value="dropletIcon">Droplet Icon</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Light Sensor -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="lightSensor"> Light (LDR)</label>
+        <div class="custom-dropdown" id="lightSensorDropdown">
+          <div class="selected-options" id="lightSensorSelected"><span class="placeholder">Select indicator...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="numeric">Numeric</div>
+            <div class="option" data-value="bulb">Bulb Icon</div>
+            <div class="option" data-value="brightnessBar">Brightness Bar</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Motion -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="motionSensor"> Motion (PIR)</label>
+        <div class="custom-dropdown" id="motionSensorDropdown">
+          <div class="selected-options" id="motionSensorSelected"><span class="placeholder">Select indicator...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="text">Text Status</div>
+            <div class="option" data-value="icon">Walking Icon</div>
+            <div class="option" data-value="alertFlash">Alert Flash</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Distance -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="distanceSensor"> Distance (Ultrasonic)</label>
+        <div class="custom-dropdown" id="distanceSensorDropdown">
+          <div class="selected-options" id="distanceSensorSelected"><span class="placeholder">Select indicator...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="numeric">Numeric cm</div>
+            <div class="option" data-value="bar">Bar Indicator</div>
+            <div class="option" data-value="radar">Radar Sweep</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gas -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="gasSensor"> Gas</label>
+        <div class="custom-dropdown" id="gasSensorDropdown">
+          <div class="selected-options" id="gasSensorSelected"><span class="placeholder">Select indicator...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="numeric">Numeric PPM</div>
+            <div class="option" data-value="alert">Alert Icon</div>
+            <div class="option" data-value="colorScale">Color Scale</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Soil -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="soilSensor"> Soil Moisture</label>
+        <div class="custom-dropdown" id="soilSensorDropdown">
+          <div class="selected-options" id="soilSensorSelected"><span class="placeholder">Select indicator...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="numeric">Numeric %</div>
+            <div class="option" data-value="drop">Water Drop Icon</div>
+            <div class="option" data-value="soilBar">Soil Bar</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Sensor -->
+      <div class="device-block">
+        <label><input type="checkbox" name="device" value="customSensor"> Custom Sensor</label>
+        <div class="custom-dropdown" id="customSensorDropdown">
+          <div class="selected-options" id="customSensorSelected"><span class="placeholder">Select indicator...</span></div>
+          <div class="options-list">
+            <div class="option" data-value="numeric">Numeric</div>
+            <div class="option" data-value="custom">Custom Visual</div>
+            <div class="option" data-value="chart">Chart</div>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- === Controls === -->
+    <fieldset>
+      <legend>Controls</legend>
+      <label><input type="checkbox" name="device" value="toggleBtn"> Toggle Button</label>
+      <label><input type="checkbox" name="device" value="momentaryBtn"> Momentary Button</label>
+      <label><input type="checkbox" name="device" value="slider"> Slider</label>
+      <label><input type="checkbox" name="device" value="switch"> Switch</label>
+    </fieldset>
+
+    <!-- === Miscellaneous === -->
+    <fieldset>
+      <legend>Miscellaneous</legend>
+      <label><input type="checkbox" name="device" value="chart"> Chart / Graph</label>
+      <label><input type="checkbox" name="device" value="camera"> Camera Stream</label>
+      <label><input type="checkbox" name="device" value="dropdown"> Dropdown Menu</label>
+      <label><input type="checkbox" name="device" value="textInput"> Text Input</label>
+      <label><input type="checkbox" name="device" value="numberInput"> Numeric Input</label>
+    </fieldset>
+  </form>
+</section>
+
+
+  <section id="templates">
+    <h2>Select Template</h2>
+    <label><input type="radio" name="template" value="simple" checked> Simple List</label><br>
+    <label><input type="radio" name="template" value="card"> Card Layout</label><br>
+    <label><input type="radio" name="template" value="dashboard"> Dashboard Grid</label><br>
+  </section>
+
+  <section id="actions">
+    <button id="generateBtn">Generate Code</button>
+    <button id="downloadBtn" disabled>Download .h File</button>
+  </section>
+
+  <section id="preview">
+    <h2>Preview</h2>
+    <iframe id="previewFrame"></iframe>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; 2025 Nelly Ndung'u. All rights reserved.</p>
+</footer>
+<script src="main.js" defer></script>
+</body>
+</html>

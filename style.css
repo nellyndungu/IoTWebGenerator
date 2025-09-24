@@ -1,0 +1,220 @@
+/* ===== Reset & Base Styles ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background-color: #ffffff;
+    color: #111111;
+    line-height: 1.6;
+}
+
+/* ===== Header ===== */
+header {
+    background-color: #103256;
+    color: #fff;
+    text-align: center;
+    padding: 2rem 1rem;
+    border-bottom: 4px solid #0056b3;
+}
+header h1 {
+    margin-bottom: 0.5rem;
+    font-size: 2.2rem;
+    font-weight: bold;
+}
+header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* ===== Main Layout ===== */
+main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    background: #fdfdfd;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+section:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+section h2 {
+    margin-bottom: 1rem;
+    color: #103256;
+    border-left: 4px solid #0056b3;
+    padding-left: 0.5rem;
+}
+section h3 {
+    margin: 1rem 0 0.5rem;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+/* ===== Form Elements ===== */
+.device-block {
+    margin-bottom: 1.2rem;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.6rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #222;
+}
+
+input[type="checkbox"], input[type="radio"] {
+    margin-right: 0.5rem;
+}
+
+/* ===== Custom Dropdown (single consolidated block) ===== */
+.custom-dropdown {
+    position: relative;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    padding: 6px 10px;
+    margin-bottom: 1rem;
+}
+
+.selected-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-height: 28px;
+    align-items: center;
+    color: #666;
+    padding: 6px 4px;
+}
+
+.selected-options .placeholder {
+    color: #999;
+    font-size: 0.9rem;
+}
+
+.selected-options .tag {
+    background: #103256;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.selected-options .tag .remove-tag {
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 6px;
+}
+
+/* options list */
+.options-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    display: none;
+    z-index: 1000;
+}
+
+.options-list .option {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.options-list .option:hover {
+    background: #f0f0f0;
+}
+
+.custom-dropdown.active .options-list {
+    display: block;
+}
+
+/* ===== Buttons ===== */
+#actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+}
+
+button {
+    background: #103256;
+    color: #fff;
+    border: none;
+    padding: 0.8rem 1.6rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+button:hover {
+    background: #0056b3;
+    transform: scale(1.05);
+}
+button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+}
+
+/* ===== Preview Area ===== */
+#preview iframe, #previewFrame {
+    width: 100%;
+    height: 350px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-top: 1rem;
+    background: #fff;
+}
+
+/* ===== Switch element (small style) ===== */
+.switch {
+  display:inline-block;
+  position:relative;
+  width:46px;
+  height:26px;
+}
+.switch input { display:none; }
+.switch .slider {
+  position:absolute; inset:0; border-radius:26px; background:#ccc; transition:all .2s;
+}
+.switch input:checked + .slider { background:#103256; }
+.switch .slider::after { content:''; position:absolute; left:4px; top:4px; width:18px; height:18px; border-radius:50%; background:#fff; transition:all .2s; }
+.switch input:checked + .slider::after { transform: translateX(20px); }
+
+/* ===== Footer ===== */
+footer {
+    background: #111111;
+    color: #ffffff;
+    text-align: center;
+    padding: 1rem;
+}
