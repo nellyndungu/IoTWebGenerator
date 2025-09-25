@@ -76,6 +76,42 @@ const deviceCategory = {
   misc: ["chart","camera","dropdown","textInput","numberInput"]
 };
 
+//Client-side JS to inject into generated pages
+function buildClientJS() {
+  return `
+<script>
+  async function toggleDevice(device, state) {
+    try {
+      await fetch('/' + device + '?state=' + state);
+    } catch (err) {
+      console.error('Failed to toggle', device, err);
+    }
+  }
+
+  function updateValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  async function fetchStatus() {
+    try {
+      const res = await fetch('/status');
+      const data = await res.json();
+      for (const key in data) {
+        updateValue(key, data[key]);
+      }
+    } catch (err) {
+      console.error('Status fetch failed', err);
+    }
+  }
+
+  // Poll every 2s
+  setInterval(fetchStatus, 2000);
+</script>
+`;
+}
+
+
 //Template layouts
 function buildTemplate(template, sections, pageTitle, pageHeading) {
   const safeTitle = pageTitle || "ESP32 IoT Preview";
@@ -101,6 +137,7 @@ function buildTemplate(template, sections, pageTitle, pageHeading) {
     <h2>Sensors</h2><div class="grid">${sections.sensors.map(s => `<div class="panel">${s}</div>`).join("")}</div>
     <h2>Controls</h2><div class="grid">${sections.controls.map(s => `<div class="panel">${s}</div>`).join("")}</div>
     <h2>Misc</h2><div class="grid">${sections.misc.map(s => `<div class="panel">${s}</div>`).join("")}</div>
+    ${buildClientJS()}
     ${tail}`;
   }
 
@@ -110,6 +147,7 @@ function buildTemplate(template, sections, pageTitle, pageHeading) {
       ${[...sections.actuators, ...sections.sensors, ...sections.controls, ...sections.misc]
         .map(s => `<div class="panel">${s}</div>`).join("")}
     </div>
+    ${buildClientJS()}
     ${tail}`;
   }
 
@@ -118,6 +156,7 @@ function buildTemplate(template, sections, pageTitle, pageHeading) {
     ${sections.sensors.length ? `<h2>Sensors</h2><ul class="simple-list">${sections.sensors.map(s => `<li>${s}</li>`).join("")}</ul>` : ""}
     ${sections.controls.length ? `<h2>Controls</h2><ul class="simple-list">${sections.controls.map(s => `<li>${s}</li>`).join("")}</ul>` : ""}
     ${sections.misc.length ? `<h2>Misc</h2><ul class="simple-list">${sections.misc.map(s => `<li>${s}</li>`).join("")}</ul>` : ""}
+    ${buildClientJS()}
     ${tail}`;
 }
 
@@ -206,11 +245,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const htmlContent = buildTemplate(template, sections, pageTitle, pageHeading);
     previewFrame.srcdoc = htmlContent;
 
-    // === Build Summary ===
+   // === Build Summary ===
     const summaryDiv = document.getElementById("summaryContent");
     const deviceList = selectedDevices.map(d => d.value);
     const indicatorsByDevice = {};
 
+    // Collect chosen indicators per device
     selectedDevices.forEach(deviceInput => {
       const device = deviceInput.value;
       const count = parseInt(document.querySelector(`.device-count[data-device="${device}"]`)?.value || "1", 10);
@@ -224,6 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
       indicatorsByDevice[device] = { count, chosenIndicators };
     });
 
+    // Libraries mapping
     const libMap = {
       chart: "Chart.js (served from CDN or stored locally)",
       camera: "ESP32-CAM support",
@@ -235,6 +276,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const requiredLibs = [...new Set(deviceList.map(d => libMap[d]).filter(Boolean))];
 
+    // Routes mapping
+    const routeMap = {
+      led: ["/led/on", "/led/off"],
+      relay: ["/relay/on", "/relay/off"],
+      motor: ["/motor/on", "/motor/off"],
+      fan: ["/fan/on", "/fan/off"],
+      buzzer: ["/buzzer/on", "/buzzer/off"],
+      servo: ["/servo?angle=VALUE"],
+
+      tempSensor: ["/temp"],
+      humiditySensor: ["/humidity"],
+      lightSensor: ["/light"],
+      motionSensor: ["/motion"],
+      distanceSensor: ["/distance"],
+      gasSensor: ["/gas"],
+      soilSensor: ["/soil"],
+      customSensor: ["/custom"],
+
+      toggleBtn: ["/toggle"],
+      momentaryBtn: ["/momentary/start", "/momentary/stop"],
+      slider: ["/slider?value=VALUE"],
+      switch: ["/switch?state=on", "/switch?state=off"],
+
+      chart: ["/data"],
+      camera: ["/camera"],
+      dropdown: ["/dropdown?option=VALUE"],
+      textInput: ["/text?value=VALUE"],
+      numberInput: ["/number?value=VALUE"],
+    };
+
+    // === Summary Content ===
     let htmlSummary = `<p><strong>Filename:</strong> webpage.h</p>`;
     htmlSummary += `<h3>Devices & Indicators</h3><ul>`;
     deviceList.forEach(d => {
@@ -243,6 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     htmlSummary += `</ul>`;
 
+    // Libraries
     if (requiredLibs.length) {
       htmlSummary += `<h3>Required Libraries</h3><ul>`;
       requiredLibs.forEach(lib => htmlSummary += `<li>${lib}</li>`);
@@ -251,8 +324,20 @@ document.addEventListener('DOMContentLoaded', () => {
       htmlSummary += `<p><em>No extra libraries required (basic GPIO only).</em></p>`;
     }
 
+    // Routes
+    htmlSummary += `<h3>ESP32 Routes to Implement</h3><ul>`;
+    deviceList.forEach(d => {
+      const info = indicatorsByDevice[d];
+      if (routeMap[d]) {
+        const routes = routeMap[d].map(r => r.replace("VALUE", "{value}")).join(", ");
+        htmlSummary += `<li><strong>${d} (x${info.count})</strong>: ${routes}</li>`;
+      }
+    });
+    htmlSummary += `</ul>`;
+
     summaryDiv.innerHTML = htmlSummary;
 
+    
     window.generatedContent = wrapAsHFile(htmlContent);
     downloadBtn.disabled = false;
   });
