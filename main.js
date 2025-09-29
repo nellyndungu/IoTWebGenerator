@@ -75,9 +75,40 @@ const deviceCategory = {
   controls: ["toggleBtn","momentaryBtn","slider","switch"],
   misc: ["chart","camera","dropdown","textInput","numberInput"]
 };
+function buildClientJS(commType) {
+  if (commType === "ws") {
+    return `
+<script>
+  const socket = new WebSocket("ws://" + window.location.host + "/ws");
 
-//Client-side JS to inject into generated pages
-function buildClientJS() {
+  socket.onopen = () => console.log("WebSocket connected");
+  socket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      for (const key in data) {
+        updateValue(key, data[key]);
+      }
+    } catch(err) {
+      console.error("Invalid WS message", err);
+    }
+  };
+  socket.onclose = () => console.log("WebSocket closed");
+
+  function sendCommand(device, value) {
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ device, value }));
+    }
+  }
+
+  function updateValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+</script>
+`;
+  }
+
+  // default: HTTP polling
   return `
 <script>
   async function toggleDevice(device, state) {
@@ -113,7 +144,7 @@ function buildClientJS() {
 
 
 //Template layouts
-function buildTemplate(template, sections, pageTitle, pageHeading) {
+function buildTemplate(template, sections, pageTitle, pageHeading, commType) {
   const safeTitle = pageTitle || "ESP32 IoT Preview";
   const safeHeading = pageHeading || "ESP32 IoT Preview";
 
@@ -137,7 +168,7 @@ function buildTemplate(template, sections, pageTitle, pageHeading) {
     ${sections.sensors.length? `<h2>Sensors</h2><div class="grid">${sections.sensors.map(s => `<div class="panel">${s}</div>`).join("")}</div> `: ""}
     ${sections.controls.length? `<h2>Controls</h2><div class="grid">${sections.controls.map(s => `<div class="panel">${s}</div>`).join("")}</div> ` : ""}
     ${sections.misc.length? `<h2>Misc</h2><div class="grid">${sections.misc.map(s => `<div class="panel">${s}</div>`).join("")}</div> ` : ""}
-    ${buildClientJS()}
+    ${buildClientJS(commType)}
     ${tail}`;
   }
 
@@ -241,8 +272,8 @@ document.addEventListener('DOMContentLoaded', () => {
         sections[category].push(deviceHTML);
       }
     });
-
-    const htmlContent = buildTemplate(template, sections, pageTitle, pageHeading);
+    const commType = document.getElementById("commType").value;
+    const htmlContent = buildTemplate(template, sections, pageTitle, pageHeading, commType);
     previewFrame.srcdoc = htmlContent;
 
    // === Build Summary ===
