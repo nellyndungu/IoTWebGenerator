@@ -133,10 +133,10 @@ function buildTemplate(template, sections, pageTitle, pageHeading) {
 
   if (template === "dashboard") {
     return `${baseHead}
-    <h2>Actuators</h2><div class="grid">${sections.actuators.map(s => `<div class="panel">${s}</div>`).join("")}</div>
-    <h2>Sensors</h2><div class="grid">${sections.sensors.map(s => `<div class="panel">${s}</div>`).join("")}</div>
-    <h2>Controls</h2><div class="grid">${sections.controls.map(s => `<div class="panel">${s}</div>`).join("")}</div>
-    <h2>Misc</h2><div class="grid">${sections.misc.map(s => `<div class="panel">${s}</div>`).join("")}</div>
+    ${sections.actuators.length? `<h2>Actuators</h2><div class="grid">${sections.actuators.map(s => `<div class="panel">${s}</div>`).join("")}</div> `: ""}
+    ${sections.sensors.length? `<h2>Sensors</h2><div class="grid">${sections.sensors.map(s => `<div class="panel">${s}</div>`).join("")}</div> `: ""}
+    ${sections.controls.length? `<h2>Controls</h2><div class="grid">${sections.controls.map(s => `<div class="panel">${s}</div>`).join("")}</div> ` : ""}
+    ${sections.misc.length? `<h2>Misc</h2><div class="grid">${sections.misc.map(s => `<div class="panel">${s}</div>`).join("")}</div> ` : ""}
     ${buildClientJS()}
     ${tail}`;
   }
@@ -278,35 +278,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Routes mapping
     const routeMap = {
-      led: ["/led/on", "/led/off"],
-      relay: ["/relay/on", "/relay/off"],
-      motor: ["/motor/on", "/motor/off"],
-      fan: ["/fan/on", "/fan/off"],
-      buzzer: ["/buzzer/on", "/buzzer/off"],
-      servo: ["/servo?angle=VALUE"],
+      led: (i) => [`/led${i}/on`, `/led${i}/off`],
+      relay: (i) => [`/relay${i}/on`, `/relay${i}/off`],
+      motor: (i) => [`/motor${i}/on`, `/motor${i}/off`],
+      fan: (i) => [`/fan${i}/on`, `/fan${i}/off`],
+      buzzer: (i) => [`/buzzer${i}/on`, `/buzzer${i}/off`],
+      servo: (i) => [`/servo${i}?angle=VALUE`],
 
-      tempSensor: ["/temp"],
-      humiditySensor: ["/humidity"],
-      lightSensor: ["/light"],
-      motionSensor: ["/motion"],
-      distanceSensor: ["/distance"],
-      gasSensor: ["/gas"],
-      soilSensor: ["/soil"],
-      customSensor: ["/custom"],
+      tempSensor: (i) => [`/temp${i}/value`],
+      humiditySensor: (i) => [`/humidity${i}/value`],
+      lightSensor: (i) => [`/light${i}/value`],
+      motionSensor: (i) => [`/motion${i}/value`],
+      distanceSensor: (i) => [`/distance${i}/value`],
+      gasSensor: (i) => [`/gas${i}/value`],
+      soilSensor: (i) => [`/soil${i}/value`],
+      customSensor: (i) => [`/custom${i}/value`],
 
-      toggleBtn: ["/toggle"],
-      momentaryBtn: ["/momentary/start", "/momentary/stop"],
-      slider: ["/slider?value=VALUE"],
-      switch: ["/switch?state=on", "/switch?state=off"],
+      toggleBtn: (i) => [`/toggle${i}`],
+      momentaryBtn: (i) => [`/momentary${i}`],
+      slider: (i) => [`/slider${i}?value=VALUE`],
+      switch: (i) => [`/switch${i}`],
 
-      chart: ["/data"],
-      camera: ["/camera"],
-      dropdown: ["/dropdown?option=VALUE"],
-      textInput: ["/text?value=VALUE"],
-      numberInput: ["/number?value=VALUE"],
+      chart: (i) => [`/chart${i}/data`],
+      camera: (i) => [`/camera${i}/stream`],
+      dropdown: (i) => [`/dropdown${i}/select`],
+      textInput: (i) => [`/textinput${i}`],
+      numberInput: (i) => [`/numberinput${i}`],
     };
 
-    // === Summary Content ===
+    //Summary Content
     let htmlSummary = `<p><strong>Filename:</strong> webpage.h</p>`;
     htmlSummary += `<h3>Devices & Indicators</h3><ul>`;
     deviceList.forEach(d => {
@@ -328,10 +328,18 @@ document.addEventListener('DOMContentLoaded', () => {
     htmlSummary += `<h3>ESP32 Routes to Implement</h3><ul>`;
     deviceList.forEach(d => {
       const info = indicatorsByDevice[d];
+
       if (routeMap[d]) {
-        const routes = routeMap[d].map(r => r.replace("VALUE", "{value}")).join(", ");
-        htmlSummary += `<li><strong>${d} (x${info.count})</strong>: ${routes}</li>`;
+      const routes = [];
+      for (let i = 1; i <= info.count; i++) {
+        const rts = typeof routeMap[d] === "function"
+          ? routeMap[d](i)
+          : routeMap[d];
+        routes.push(`Instance ${i}: ${rts.map(r => r.replace("VALUE", "{value}")).join(", ")}`);
       }
+      htmlSummary += `<li><strong>${d} (x${info.count})</strong><ul>${routes.map(r => `<li>${r}</li>`).join("")}</ul></li>`;
+    }
+
     });
     htmlSummary += `</ul>`;
 
